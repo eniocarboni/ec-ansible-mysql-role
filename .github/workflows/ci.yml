@@ -30,8 +30,10 @@ jobs:
       - name: Disable AppArmor on Ubuntu/Debian.
         run: |
             set -x
-            sudo apt-get install apparmor-profiles
-            sudo ln -s /etc/apparmor.d/usr.sbin.mysqld /etc/apparmor.d/disable/
+            sudo apt-get update
+            sudo apt-get install -y apparmor-profiles
+            sudo echo "# disable mysql profile" >/etc/apparmor.d/usr.sbin.mysqld
+            sudo echo "# disable myriadb profile" >/etc/apparmor.d/usr.sbin.mariadb
             sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
         if: ${{ contains(matrix.dockerdistro, 'ubuntu') }}
       - name: Run Molecule tests
