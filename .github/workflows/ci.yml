@@ -26,6 +26,14 @@ jobs:
           python-version: '3.x'
       - name: Install ansible, molecule and dependences
         run: pip3 install ansible molecule[docker] docker yamllint ansible-lint
+       # See: https://github.com/geerlingguy/ansible-role-mysql/issues/422
+      - name: Disable AppArmor on Ubuntu/Debian.
+        run: |
+            set -x
+            sudo apt-get install apparmor-profiles
+            sudo ln -s /etc/apparmor.d/usr.sbin.mysqld /etc/apparmor.d/disable/
+            sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
+        if: ${{ startsWith(matrix.distro, 'ubuntu') }}
       - name: Run Molecule tests
         run: molecule test
         env:
