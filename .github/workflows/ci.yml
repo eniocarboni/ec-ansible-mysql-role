@@ -8,14 +8,16 @@ name: CI
 jobs:
   molecule:
     name: Molecule
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         dockerdistro:
           - eniocarboni/docker-ubuntu-systemd:22.04
           - eniocarboni/docker-ubuntu-systemd:20.04
           - eniocarboni/docker-ubuntu-systemd:18.04
-          - eniocarboni/docker-rockylinux-systemd:latest
+          # see https://github.com/containerd/containerd/pull/7315
+          # wait until runc and containerd update
+          #- eniocarboni/docker-rockylinux-systemd:latest
           - eniocarboni/docker-rockylinux-systemd:8
     steps:
       - name: Check out
