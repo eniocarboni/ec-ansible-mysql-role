@@ -1,0 +1,4 @@
+---
+mysql_python: python3-pymysql
+mysql_service_name: mysql
+mysql_unix_socket: /var/run/mysqld/mysqld.sock

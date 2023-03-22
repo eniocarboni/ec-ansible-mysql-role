@@ -1,0 +1,23 @@
+galaxy_info:
+  role_name: mysql
+  namespace: eniocarboni
+  author: "Enio Carboni"
+  description: "Install, secure mysql/mariadb server and create dbs and users"
+  license: 'GPLv3'
+  min_ansible_version: '2.1'
+  platforms: 
+    - name: 'Ubuntu'
+      versions:
+        - 'jammy'
+        - 'focal'
+        - 'bionic'
+    - name: 'EL'
+      versions:
+        - '9'
+        - '8'
+  galaxy_tags:
+    - mysql
+    - mariadb
+    - db
+    - database
+dependencies: []

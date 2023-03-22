@@ -1,0 +1,6 @@
+---
+- name: Primo test
+  hosts: localhost
+  remote_user: root
+  roles:
+    - eniocarboni.mysql

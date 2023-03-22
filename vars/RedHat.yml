@@ -1,0 +1,4 @@
+---
+mysql_python: python3-PyMySQL
+mysql_service_name: "{{ 'mariadb' if mysql_type == 'mariadb' else 'mysqld' }}"
+mysql_unix_socket: /var/lib/mysql/mysql.sock

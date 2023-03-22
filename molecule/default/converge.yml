@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include eniocarboni.mysql"
+      include_role:
+        name: "eniocarboni.mysql"

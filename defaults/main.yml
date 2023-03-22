@@ -1,0 +1,24 @@
+---
+# defaults file for eniocarboni.mysql
+
+# mysql_type: mariadb | mysql
+# install server and client or mariadb or mysql
+mysql_type: mariadb
+# mysql_root_password: Set Mysql root password otherwise it will be randomly created
+mysql_root_password: ''
+secure_mysql_rm_test_db: true
+secure_mysql_rm_anon_users: true
+secure_mysql_rm_non_local_root: true
+mysql_db: []
+mysql_users: []
+#mysql_db:
+#  - name: ojsdbtest
+#    collation: utf8_general_ci
+#    encoding: utf8
+#    state: present
+#mysql_users:
+#  - name: ojstest
+#    host: localhost
+#    priv: 'ojsdbtest.*:ALL'
+#    password: 'v44Hv67n7J3aLits'
+#    state: present

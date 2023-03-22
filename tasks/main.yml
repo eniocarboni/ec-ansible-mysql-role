@@ -1,0 +1,99 @@
+---
+# tasks file for eniocarboni.mysql
+
+- name: "Include vars based on OS Family [{{ ansible_os_family }}]"
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_os_family }}.yml"
+    - "default.yml"
+
+- name: "Set random Mysql root password if not defined static variable 'mysql_root_password'"
+  ansible.builtin.set_fact:
+    mysql_root_password: "{{ mysql_root_password | default(lookup('ansible.builtin.password', '/dev/null', chars=['ascii_letters', 'digits', ':.,;-_!$%='], length=25), true) }}"
+
+- name: "Update cache"
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "update_cache_{{ ansible_pkg_mgr }}.yml"
+    - update_cache_disabled.yml
+- name: "Install mysqld python libary"
+  ansible.builtin.package:
+    name: '{{ mysql_python }}'
+    state: present
+- name: "Test .my.cnf file"
+  ansible.builtin.stat:
+    path: /root/.my.cnf
+  register: stat_mycnf
+- name: "Check and install mysql server and client ({{ mysql_type }})"
+  ansible.builtin.package: # noqa package-latest
+    name: "{{ mysql_type }}-server"
+    state: latest
+- name: "Check Mysql is started"
+  ansible.builtin.service:
+    name: "{{ mysql_service_name }}"
+    state: started
+    enabled: yes
+- name: "Setting Mysql root password debug"
+  ansible.builtin.debug:
+    msg: "Mysql root password: {{ mysql_root_password }}"
+  when: not stat_mycnf.stat.exists
+- name: "Secure mysql: set root password if not present"
+  ansible.builtin.shell: >
+    mysql -S "{{ mysql_unix_socket }}" -NBe "ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED WITH mysql_native_password; ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}'; ALTER USER IF EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password; ALTER USER IF EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '{{ mysql_root_password }}'; FLUSH PRIVILEGES"
+  register: alter_result
+  ignore_errors: true
+  changed_when: alter_result.rc != 0
+  when: not stat_mycnf.stat.exists
+- name: "Secure mysql: set root password (Run only if 'ALTER USER' failed)"
+  ansible.builtin.shell: >
+    mysql -S "{{ mysql_unix_socket }}" -NBe "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ mysql_root_password }}'); UPDATE mysql.user SET plugin='mysql_native_password' WHERE user='root'; FLUSH PRIVILEGES"
+  register: set_password
+  changed_when: set_password.rc != 0 
+  when: not stat_mycnf.stat.exists and alter_result is failed
+- name: "Secure mysql: install .my.cnf"
+  ansible.builtin.template:
+    src: 'my.cnf.j2'
+    dest: '/root/.my.cnf'
+    mode: '0400'
+  when: not stat_mycnf.stat.exists
+
+- name: "Secure mysql: remove 'test' database if exist"
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    check_implicit_admin: true
+    login_unix_socket: "{{ login_unix_socket | default(omit) }}"
+  when: secure_mysql_rm_test_db
+- name: "Secure mysql: remove anonymous/null users if exists"
+  community.mysql.mysql_user:
+    name: ''
+    state: absent
+    host_all: true
+    login_unix_socket: "{{ login_unix_socket | default(omit) }}"
+  when: secure_mysql_rm_anon_users
+
+- name: "Secure mysql: remove all non local root users"
+  community.mysql.mysql_query:
+    query:
+      - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+    login_unix_socket: "{{ login_unix_socket | default(omit) }}"
+  when: secure_mysql_rm_non_local_root
+
+- name: "Create Mysql db"
+  community.mysql.mysql_db:
+    name: "{{ item.name | mandatory }}"
+    collation: "{{ item.collation | default(omit) }}"
+    encoding: "{{ item.encoding | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    login_unix_socket: "{{ login_unix_socket | default(omit) }}"
+  loop: "{{ mysql_db | default({}) }}"
+
+- name: "Create Mysql users"
+  community.mysql.mysql_user:
+    name: "{{ item.name | mandatory }}"
+    host: "{{ item.host | default(omit) }}"
+    priv: "{{ item.priv | default(omit) }}"
+    password: "{{ item.password | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    login_unix_socket: "{{ login_unix_socket | default(omit) }}"
+  loop: "{{ mysql_users | default({}) }}"
