@@ -16,7 +16,7 @@ jobs:
           - eniocarboni/docker-ubuntu-systemd:20.04
           - eniocarboni/docker-ubuntu-systemd:18.04
 #          - eniocarboni/docker-rockylinux-systemd:latest
-#          - eniocarboni/docker-rockylinux-systemd:8
+          - eniocarboni/docker-rockylinux-systemd:8
     steps:
       - name: Check out
         uses: actions/checkout@v3
