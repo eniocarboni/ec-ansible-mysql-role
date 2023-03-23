@@ -27,6 +27,14 @@ default: **empty password**
 
 `mysql_root_password: ''` 
 
+### force\_root\_password
+
+If **true** force set new *mysql\_root\_password* and secure mysql by delete **test db**, **anonymous users** and **not local root users**.
+
+default: **false**
+
+`force_root_password: false`
+
 ### secure\_mysql\_rm\_test\_db
 
 It's a boolean value and if set allow to delete test db on first install.

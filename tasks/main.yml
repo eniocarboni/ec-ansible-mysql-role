@@ -36,26 +36,26 @@
 - name: "Setting Mysql root password debug"
   ansible.builtin.debug:
     msg: "Mysql root password: {{ mysql_root_password }}"
-  when: not stat_mycnf.stat.exists
+  when: (not stat_mycnf.stat.exists) or force_root_password
 - name: "Secure mysql: set root password if not present"
   ansible.builtin.shell: >
     mysql -S "{{ mysql_unix_socket }}" -NBe "ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED WITH mysql_native_password; ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}'; ALTER USER IF EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password; ALTER USER IF EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '{{ mysql_root_password }}'; FLUSH PRIVILEGES"
   register: alter_result
   ignore_errors: true
   changed_when: alter_result.rc != 0
-  when: not stat_mycnf.stat.exists
+  when: (not stat_mycnf.stat.exists) or force_root_password
 - name: "Secure mysql: set root password (Run only if 'ALTER USER' failed)"
   ansible.builtin.shell: >
     mysql -S "{{ mysql_unix_socket }}" -NBe "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ mysql_root_password }}'); UPDATE mysql.user SET plugin='mysql_native_password' WHERE user='root'; FLUSH PRIVILEGES"
   register: set_password
   changed_when: set_password.rc != 0 
-  when: not stat_mycnf.stat.exists and alter_result is failed
+  when: ( (not stat_mycnf.stat.exists) or force_root_password) and alter_result is failed
 - name: "Secure mysql: install .my.cnf"
   ansible.builtin.template:
     src: 'my.cnf.j2'
     dest: '/root/.my.cnf'
     mode: '0400'
-  when: not stat_mycnf.stat.exists
+  when: (not stat_mycnf.stat.exists) or force_root_password
 
 - name: "Secure mysql: remove 'test' database if exist"
   community.mysql.mysql_db:
@@ -63,21 +63,21 @@
     state: absent
     check_implicit_admin: true
     login_unix_socket: "{{ login_unix_socket | default(omit) }}"
-  when: secure_mysql_rm_test_db
+  when: secure_mysql_rm_test_db or force_root_password
 - name: "Secure mysql: remove anonymous/null users if exists"
   community.mysql.mysql_user:
     name: ''
     state: absent
     host_all: true
     login_unix_socket: "{{ login_unix_socket | default(omit) }}"
-  when: secure_mysql_rm_anon_users
+  when: secure_mysql_rm_anon_users or force_root_password
 
 - name: "Secure mysql: remove all non local root users"
   community.mysql.mysql_query:
     query:
       - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
     login_unix_socket: "{{ login_unix_socket | default(omit) }}"
-  when: secure_mysql_rm_non_local_root
+  when: secure_mysql_rm_non_local_root or force_root_password
 
 - name: "Create Mysql db"
   community.mysql.mysql_db:

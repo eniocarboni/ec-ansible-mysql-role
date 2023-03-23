@@ -6,6 +6,8 @@
 mysql_type: mariadb
 # mysql_root_password: Set Mysql root password otherwise it will be randomly created
 mysql_root_password: ''
+# force_root_password: force change root password if 'true'
+force_root_password: false
 secure_mysql_rm_test_db: true
 secure_mysql_rm_anon_users: true
 secure_mysql_rm_non_local_root: true
