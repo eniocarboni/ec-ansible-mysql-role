@@ -15,9 +15,7 @@ jobs:
           - eniocarboni/docker-ubuntu-systemd:22.04
           - eniocarboni/docker-ubuntu-systemd:20.04
           - eniocarboni/docker-ubuntu-systemd:18.04
-          # see https://github.com/containerd/containerd/pull/7315
-          # wait until runc and containerd update
-          #- eniocarboni/docker-rockylinux-systemd:latest
+          - eniocarboni/docker-rockylinux-systemd:latest
           - eniocarboni/docker-rockylinux-systemd:8
     steps:
       - name: Check out
@@ -26,8 +24,8 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: '3.x'
-      - name: Install ansible, molecule and dependences
-        run: pip3 install ansible molecule[docker] docker yamllint ansible-lint
+      - name: Install ansible, molecule and dependences (molecule >5.0.0)
+        run: pip3 install ansible molecule docker molecule-plugins molecule-plugins[docker] yamllint ansible-lint
        # See: https://github.com/geerlingguy/ansible-role-mysql/issues/422
       - name: Disable AppArmor on Ubuntu/Debian.
         run: |
